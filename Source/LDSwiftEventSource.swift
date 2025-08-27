@@ -138,28 +138,28 @@ public class EventSource {
     }
 }
 
-class ReconnectionTimer {
-    private let maxDelay: TimeInterval
-    private let resetInterval: TimeInterval
-
-    var backoffCount: Int = 0
-    var connectedTime: Date?
-
-    init(maxDelay: TimeInterval, resetInterval: TimeInterval) {
-        self.maxDelay = maxDelay
-        self.resetInterval = resetInterval
-    }
-
-    func reconnectDelay(baseDelay: TimeInterval) -> TimeInterval {
-        backoffCount += 1
-        if let connectedTime = connectedTime, Date().timeIntervalSince(connectedTime) >= resetInterval {
-            backoffCount = 0
-        }
-        self.connectedTime = nil
-        let maxSleep = min(maxDelay, baseDelay * pow(2.0, Double(backoffCount)))
-        return maxSleep / 2 + Double.random(in: 0...(maxSleep / 2))
-    }
-}
+//class ReconnectionTimer {
+//    private let maxDelay: TimeInterval
+//    private let resetInterval: TimeInterval
+//
+//    var backoffCount: Int = 0
+//    var connectedTime: Date?
+//
+//    init(maxDelay: TimeInterval, resetInterval: TimeInterval) {
+//        self.maxDelay = maxDelay
+//        self.resetInterval = resetInterval
+//    }
+//
+//    func reconnectDelay(baseDelay: TimeInterval) -> TimeInterval {
+//        backoffCount += 1
+//        if let connectedTime = connectedTime, Date().timeIntervalSince(connectedTime) >= resetInterval {
+//            backoffCount = 0
+//        }
+//        self.connectedTime = nil
+//        let maxSleep = min(maxDelay, baseDelay * pow(2.0, Double(backoffCount)))
+//        return maxSleep / 2 + Double.random(in: 0...(maxSleep / 2))
+//    }
+//}
 
 // MARK: EventSourceDelegate
 class EventSourceDelegate: NSObject, URLSessionDataDelegate {
@@ -177,7 +177,7 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
 
     private let utf8LineParser: UTF8LineParser = UTF8LineParser()
     private let eventParser: EventParser
-    private let reconnectionTimer: ReconnectionTimer
+//    private let reconnectionTimer: ReconnectionTimer
     private var urlSession: URLSession?
     private var sessionTask: URLSessionDataTask?
 
@@ -194,8 +194,8 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
         self.eventParser = EventParser(handler: config.handler,
                                        initialEventId: config.lastEventId,
                                        initialRetry: config.reconnectTime)
-        self.reconnectionTimer = ReconnectionTimer(maxDelay: config.maxReconnectTime,
-                                                   resetInterval: config.backoffResetThreshold)
+//        self.reconnectionTimer = ReconnectionTimer(maxDelay: config.maxReconnectTime,
+//                                                   resetInterval: config.backoffResetThreshold)
     }
 
     func start() {
@@ -297,12 +297,12 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
         }
 
         readyState = .closed
-        let sleep = reconnectionTimer.reconnectDelay(baseDelay: currentRetry)
+//        let sleep = reconnectionTimer.reconnectDelay(baseDelay: currentRetry)
         // this formatting shenanigans is to workaround String not implementing CVarArg on Swift<5.4 on Linux
-        logger.log(.info, "Waiting %@ seconds before reconnecting...", String(format: "%.3f", sleep))
-        delegateQueue.asyncAfter(deadline: .now() + sleep) { [weak self] in
-            self?.connect()
-        }
+//        logger.log(.info, "Waiting %@ seconds before reconnecting...", String(format: "%.3f", sleep))
+//        delegateQueue.asyncAfter(deadline: .now() + sleep) { [weak self] in
+//            self?.connect()
+//        }
     }
 
     // Tells the delegate that the data task received the initial reply (headers) from the server.
@@ -322,7 +322,7 @@ class EventSourceDelegate: NSObject, URLSessionDataDelegate {
         let httpResponse = response as! HTTPURLResponse
         let statusCode = httpResponse.statusCode
         if (200..<300).contains(statusCode) && statusCode != 204 {
-            reconnectionTimer.connectedTime = Date()
+//            reconnectionTimer.connectedTime = Date()
             readyState = .open
             config.handler.onOpened()
             completionHandler(.allow)
